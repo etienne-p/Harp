@@ -4,7 +4,7 @@ var main = function() {
 		rv = new KarplusStrong(),
 		rv.delay = 1024;
 		rv.burstLen = 1024;
-		rv.feedback = 0.98;
+		rv.feedback = 0.99;
 		rv.dry = 0.5;
 		rv.mul = 0.5;
 		rv.alpha = 0.1;
@@ -27,10 +27,21 @@ var main = function() {
 	var gui = new dat.GUI();
 	gui.add(ks, 'burstLen', 1, 3000);
 	gui.add(ks, 'delay', 1, 3000);
-	gui.add(ks, 'feedback', 0.9, 1);
+	gui.add(ks, 'feedback', 0.95, 1);
 	gui.add(ks, 'dry', 0, 1);
 	gui.add(ks, 'mul', 0, 1);
 	gui.add(ks, 'alpha', 0, 1);
+
+	function updateBurst() {
+		ks.burstLen = ks.burstLen;
+	}
+
+	// fine tuning the burst
+	var burstProps = ['burstSawMul', 'burstSawAlpha', 'burstNoiseMul', 'burstNoiseAlpha'],
+		i = 0;
+	for (i; i < burstProps.length; ++i) {
+		gui.add(ks, burstProps[i], 0, 1).onChange(updateBurst);
+	}
 
 	function audioPlaying(val) {
 		if (val) scriptProcessor.connect(audioContext.destination);

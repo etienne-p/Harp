@@ -1,30 +1,63 @@
+KSMixin = (function() {
+
+	function zero(len_) {
+		var rv = [],
+			len = Math.floor(len_);
+		for (var i = 0; i < len; ++i) rv[i] = 0;
+		return rv;
+	}
+
+	function noise(len_) {
+		var rv = [],
+			len = Math.floor(len_),
+			i = 0;
+		for (; i < len; ++i) rv[i] = Math.random() * 2 - 1;
+		return rv;
+	}
+
+	function saw(len_) {
+		var rv = [],
+			len = Math.floor(len_),
+			i = 0;
+		for (; i < len; ++i) {
+			ratio = i / len;
+			rv[i] = ((1 - ratio) * 2) - 1;
+		}
+		return rv;
+	}
+
+	function mix(a, b, mulA, mulB){
+		var i = 0, len = Math.min(a.length, b.length), rv = [];
+		for (; i < len; ++i) rv[i] = a[i] * mulA + b[i] * mulB;
+		return rv;
+	}
+
+	return function() {
+		this.zero = zero;
+		this.noise = noise;
+		this.saw = saw;
+		this.mix = mix;
+		return this;
+	}
+})();
+
 var KarplusStrong = function() {
 	this.mul = 1;
 	this.alpha = 0; // low pass alpha
 	this._feedback = 0;
 	this._dry = 0.5;
 	this._index = -1; // sample index, init in updateWavetable
+
+	//...
+	this.burstSawMul = 0.5;
+	this.burstSawAlpha = 0.5;
+	this.burstNoiseMul = 0.5;
+	this.burstNoiseAlpha = 0.5;
 }
 
 KarplusStrong.prototype = {
 
 	constructor: KarplusStrong,
-
-	emptyBuffer: function(len_) {
-		var rv = [],
-			len = Math.floor(len_);
-		for (var i = 0; i < len; ++i) rv[i] = 0;
-		console.log('emptyBuffer');
-		return rv;
-	},
-
-	noiseBuffer: function(len_) {
-		var rv = [],
-			len = Math.floor(len_),
-			i = 0;
-		for (; i < len; ++i) rv[i] = Math.random() * 2 - 1;
-		return rv;
-	},
 
 	pluck: function() {
 		// add burst in wavetable
@@ -58,6 +91,8 @@ KarplusStrong.prototype = {
 	}
 }
 
+KSMixin.call(KarplusStrong.prototype);
+
 // accessors
 
 Object.defineProperty(KarplusStrong.prototype, 'delay', {
@@ -65,7 +100,7 @@ Object.defineProperty(KarplusStrong.prototype, 'delay', {
 		return this._wavetable.length;
 	},
 	set: function(len) {
-		this._wavetable = this.emptyBuffer(len);
+		this._wavetable = this.zero(len);
 		this._index = 0;
 	}
 });
@@ -74,8 +109,12 @@ Object.defineProperty(KarplusStrong.prototype, 'burstLen', {
 	get: function() {
 		return this._burst.length;
 	},
+	// TODO find a way to easily regenerates the burst when one of the parameters change
 	set: function(len) {
-		this._burst = this.noiseBuffer(len);
+		this._burst = this.mix(
+			lib.DSPUtil.lowpass(this.saw(len), 0.5),
+			lib.DSPUtil.lowpass(this.noise(len), 0.5),
+			0.6, 0.2);
 	}
 });
 
