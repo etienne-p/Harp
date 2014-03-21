@@ -1,4 +1,4 @@
-var main = function() {
+var testKarplusStrong = function() {
 
 	function initKS() {
 		rv = new KarplusStrong(),
@@ -64,4 +64,19 @@ var main = function() {
 	toggleAudio();
 }
 
-window.onload = main;
+function testString(){
+
+
+	// create canvas
+
+
+	// create string
+
+	// update and render on canvas
+
+	// interact with mouse
+
+	// add sleep?
+}
+
+window.onload = testStrings;
