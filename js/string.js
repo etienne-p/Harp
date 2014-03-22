@@ -13,8 +13,8 @@ OSCStringUtil = (function() {
 			}
 		}
 
-		var dx = (eX - stX) / nPts,
-			dy = (eY - stY) / nPts,
+		var dx = (eX - stX) / (nPts - 1),
+			dy = (eY - stY) / (nPts - 1),
 			i = 0,
 			rv = [];
 
@@ -69,11 +69,12 @@ OSCStringUtil = (function() {
 	}
 })()
 
-var OSCString = function() {
+var OSCString = function(id) {
+	this.id = id;
 	this.acceleration = 0.99;
 	this.originAcceleration = 0.8;
 	this.friction = 0.45;
-	this.active = false;
+	this.active = true;
 }
 
 OSCString.prototype = {

@@ -66,55 +66,25 @@ function testKarplusStrong() {
 
 function testString() {
 
-	// create canvas
-	var canvas = document.getElementById('mycanvas'),
-		requestUpdate = new lib.Signal(),
-		str = new OSCString(requestUpdate);
-
-	function render(particles) {
-		var ctx = canvas.getContext('2d'),
-			pi2 = 2 * Math.PI,
-			p = null,
-			i = 0,
-			len = particles.length,
-			w = canvas.width = window.innerWidth,
-			h = canvas.height = window.innerHeight;
-
-		ctx.clearRect(0, 0, w, h);
-		ctx.fillStyle = '#ff0000';
-		ctx.strokeStyle = '#ff0000';
-
-		p = particles[0];
-		ctx.moveTo(p.x * w, p.y * h);
-
-		for (i = 1; i < len; ++i) {
-			p = particles[i];
-			ctx.lineTo(p.x * w, p.y * h);
+	var uid = (function() {
+		var index = -1;
+		return function() {
+			return 'id_' + (++index);
 		}
+	})();
 
-		ctx.stroke();
-	}
-
-	requestUpdate.add(function(who, what) {
-		console.log('str: [' + who + '] needs update: [' + what + ']');
-	});
-
-	str.init(0.5, 0.1, 0.5, 0.9, 24);
-
-	var fps = new lib.FPS(),
-		mouse = new lib.Mouse(false, document);
-
-
-	/*mouse.click.add(function(x, y) {
-		var len = str.particles.length;
-		var index = Math.floor(len * y / window.innerHeight);
-		index = Math.min(len - 2, Math.max(1, index));
-		str.particles[index].vx += 0.2 * (0.5 - Math.random());
-	});*/
-
-	var findIntersection = lib.GeomUtil.findIntersection,
+	// create canvas
+	var w = window.innerWidth,
+		h = window.innerHeight,
+		strings = [],
+		renderer = new GLRenderer().init(),
+		//...
+		fps = new lib.FPS(),
+		mouse = new lib.Mouse(false, document),
+		//...
+		findIntersection = lib.GeomUtil.findIntersection,
 		distance = lib.GeomUtil.distance,
-		mouseMoved = false;
+		mouseMoved = false,
 		prevMousePos = {
 			x: -1,
 			y: -1
@@ -140,7 +110,7 @@ function testString() {
 		}
 	}
 
-	function checkPluck(x, y) {
+	function checkPluck(str) {
 		// check segment intersect
 		var intersect = findIntersection(
 			str.particles[0],
@@ -159,32 +129,55 @@ function testString() {
 	function storeMousePos(x, y) {
 		mouseMoved = true;
 		mousePos = {
-			x: x / window.innerWidth,
-			y: y / window.innerHeight
+			x: x / w,
+			y: y / h
 		};
 	}
+
+	function addString(fromX, fromY, toX, toY) {
+		var str = new OSCString(uid());
+		str.init(fromX, fromY, toX, toY, 24);
+		str.active = true;
+		renderer.addLine(str.id, 24);
+		strings.push(str);
+	}
+
+	// add random lines
+	var j = 60;
+	while (j--) addString(Math.random(), Math.random(), Math.random(), Math.random());
 
 	// interact with mouse
 	mouse.position.add(storeMousePos);
 
 	// update and render on canvas
 	fps.tick.add(function() {
+		var i = 0,
+			len = strings.length;
 		if (mouseMoved) {
-			checkPluck();
+			for (i = 0; i < len; ++i) checkPluck(strings[i]);
 			prevMousePos = mousePos;
+			mouseMoved = false;
 		}
-		if (str.active) {
-			render(str.update());
+		for (i = 0; i < len; ++i) {
+			if (strings[i].active) strings[i].update();
 		}
+		renderer.render(strings);
 	});
 
-	render(str.update()); // first draw
-
 	// add gui
-	var gui = new dat.GUI();
+	/*var gui = new dat.GUI();
 	gui.add(str, 'acceleration', 0, 1);
 	gui.add(str, 'originAcceleration', 0, 1);
-	gui.add(str, 'friction', 0, 1);
+	gui.add(str, 'friction', 0, 1);*/
+
+	// resize
+	window.addEventListener('resize', function() {
+		w = window.innerWidth,
+		h = window.innerHeight,
+		renderer.resize(w, h);
+	});
+
+	renderer.resize(w, h);
 
 	// start
 	mouse.enabled(true);

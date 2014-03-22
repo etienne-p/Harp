@@ -53,6 +53,8 @@ var KarplusStrong = function() {
 	this.burstSawAlpha = 0.5;
 	this.burstNoiseMul = 0.5;
 	this.burstNoiseAlpha = 0.5;
+
+	this.active = false;
 }
 
 KarplusStrong.prototype = {
