@@ -69,11 +69,11 @@ OSCStringUtil = (function() {
 	}
 })()
 
-var OSCString = function(requestUpdate) {
+var OSCString = function() {
 	this.acceleration = 0.99;
 	this.originAcceleration = 0.8;
 	this.friction = 0.45;
-	this.requestUpdate = requestUpdate; // used to notify that the string should be updated & rendered
+	this.active = false;
 }
 
 OSCString.prototype = {
@@ -86,7 +86,7 @@ OSCString.prototype = {
 
 	update: function(){
 		var sumVel = this.updateParticles(this.particles, this.acceleration, this.originAcceleration, this.friction);
-		if (sumVel < 0.001) this.requestUpdate.dispatch(this, false);
+		this.active = (sumVel > 0.001);
 		return this.particles;
 	},
 

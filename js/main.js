@@ -104,10 +104,6 @@ function testString() {
 	var fps = new lib.FPS(),
 		mouse = new lib.Mouse(false, document);
 
-	// update and render on canvas
-	fps.tick.add(function() {
-		render(str.update());
-	});
 
 	/*mouse.click.add(function(x, y) {
 		var len = str.particles.length;
@@ -117,31 +113,72 @@ function testString() {
 	});*/
 
 	var findIntersection = lib.GeomUtil.findIntersection,
+		distance = lib.GeomUtil.distance,
+		mouseMoved = false;
 		prevMousePos = {
+			x: -1,
+			y: -1
+		},
+		mousePos = {
 			x: -1,
 			y: -1
 		};
 
-	function checkPluck(x, y) {
+	function pluck(particles, at, dx, dy) {
+		var i = 0,
+			len = particles.length,
+			strLen = distance(particles[0].x, particles[0].y, particles[len - 1].x, particles[len - 1].y)
+			d = 0,
+			mul = 0,
+			p = null;
+		for (; i < len; ++i) {
+			p = particles[i];
+			d = distance(at.x, at.y, p.x, p.y);
+			mul = Math.exp(-d * 100 / strLen)
+			p.vx += dx * mul;
+			p.vy += dy * mul;
+		}
+	}
 
+	function checkPluck(x, y) {
 		// check segment intersect
 		var intersect = findIntersection(
 			str.particles[0],
 			str.particles[str.particles.length - 1],
-			prevMousePos, {
-				x: x / window.innerWidth,
-				y: y / window.innerHeight
-			}); // TODO: build an object to fit function expectation?
+			prevMousePos, mousePos); // TODO: build an object to fit function expectation?
 
-		if (intersect) console.log('Intersect: [' + intersect + ']');
-
-		prevMousePos.x = x / window.innerWidth;
-		prevMousePos.y = y / window.innerHeight;
+		if (intersect) {
+			str.active = true;
+			pluck(str.particles,
+				intersect,
+				mousePos.x - prevMousePos.x,
+				mousePos.y - prevMousePos.y);
+		}
 	}
 
-	mouse.position.add(checkPluck);
+	function storeMousePos(x, y) {
+		mouseMoved = true;
+		mousePos = {
+			x: x / window.innerWidth,
+			y: y / window.innerHeight
+		};
+	}
 
 	// interact with mouse
+	mouse.position.add(storeMousePos);
+
+	// update and render on canvas
+	fps.tick.add(function() {
+		if (mouseMoved) {
+			checkPluck();
+			prevMousePos = mousePos;
+		}
+		if (str.active) {
+			render(str.update());
+		}
+	});
+
+	render(str.update()); // first draw
 
 	// add gui
 	var gui = new dat.GUI();
