@@ -1,4 +1,4 @@
-OSCStringMixin = (function() {
+OSCStringUtil = (function() {
 
 	function initPoints(stX, stY, eX, eY, nPts) {
 
@@ -6,6 +6,8 @@ OSCStringMixin = (function() {
 			return {
 				x: x,
 				y: y,
+				ox: x, 
+				oy: y,
 				vx: 0,
 				vy: 0
 			}
@@ -20,7 +22,7 @@ OSCStringMixin = (function() {
 		return rv;
 	}
 
-	function updateParticles(particles, acceleration, friction) {
+	function updateParticles(particles, acceleration, originAcceleration, friction) {
 		var i = 0,
 			len = particles.length,
 			prevNode = null,
@@ -38,12 +40,16 @@ OSCStringMixin = (function() {
 			nextNode = particles[i + 1];
 
 			// attracted by previous
-			node.vx += acceleration * (prevNode.x - p.x);
-			node.vy += acceleration * (prevNode.y - p.y);
+			node.vx += acceleration * (prevNode.x - node.x);
+			node.vy += acceleration * (prevNode.y - node.y);
 
 			// attracted by next
-			node.vx += acceleration * (nextNode.x - p.x);
-			node.vy += acceleration * (nextNode.y - p.y);
+			node.vx += acceleration * (nextNode.x - node.x);
+			node.vy += acceleration * (nextNode.y - node.y);
+
+			// attracted by origin
+			node.vx += originAcceleration * (node.ox - node.x);
+			node.vy += originAcceleration * (node.oy - node.y);
 
 			node.vx *= friction;
 			node.vy *= friction;
@@ -58,32 +64,35 @@ OSCStringMixin = (function() {
 
 	return function() {
 		this.initPoints = initPoints;
+		this.updateParticles = updateParticles;
 		return this;
 	}
 })()
 
-var OSCString = function() {
-	this.acceleration = 0.5;
-	this.friction = 0.5;
-	this.requestUpdate = new lib.Signal(); // used to notify that the string should be updated & rendered
+var OSCString = function(requestUpdate) {
+	this.acceleration = 0.99;
+	this.originAcceleration = 0.8;
+	this.friction = 0.45;
+	this.requestUpdate = requestUpdate; // used to notify that the string should be updated & rendered
 }
 
 OSCString.prototype = {
 
 	constructor: OSCString,
 
-	init: function(from, to, numPts){
-		this.particles = this.initPoints(from.x, from.y, to.x, to.y, numPts)
-	}
+	init: function(fromX, fromY, toX, toY, numPts){
+		this.particles = this.initPoints(fromX, fromY, toX, toY, numPts)
+	},
 
 	update: function(){
-		var sumVel = this.updateParticles(this.particles, this.acceleration, this.friction);
-		if (sumVel < 0.1) this.requestUpdate(this, false)
-	}
+		var sumVel = this.updateParticles(this.particles, this.acceleration, this.originAcceleration, this.friction);
+		if (sumVel < 0.001) this.requestUpdate.dispatch(this, false);
+		return this.particles;
+	},
 
 	pluck: function(){
 		this.requestUpdate(this, true)
 	}
 }
 
-OSCStringMixin.call(OSCString.prototype);
+OSCStringUtil.call(OSCString.prototype);

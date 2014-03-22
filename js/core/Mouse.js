@@ -14,10 +14,6 @@ lib.Mouse = function(isMobile, element) {
 			evt: 'click',
 			as: 'click'
 		}],
-		position = {
-			x: 0,
-			y: 0
-		},
 		signals = {},
 		handlers = {},
 		mouseMoveSignal = new lib.Signal(),
@@ -25,19 +21,21 @@ lib.Mouse = function(isMobile, element) {
 		yOffset = 0;
 
 	//-- init signals value
-	mouseMoveSignal.value = position;
+	self.x = -1;
+	self.y = -1;
+	mouseMoveSignal.value = [self.x, self.y];
 
 	// dynamic signals / handlers generation
 	function getHandler(as) {
 		return function(evt) {
-			signals[as].dispatch(position);
+			signals[as].dispatch(self.x, self.y);
 		}
 	}
 	var as = null;
 	for (var i = data.length - 1; i > -1; --i) {
 		as = data[i].as;
 		self[as] = signals[as] = new lib.Signal();
-		self[as].value = position;
+		self[as].value = [self.x, self.y];
 		handlers[as] = getHandler(as);
 	}
 
@@ -54,20 +52,14 @@ lib.Mouse = function(isMobile, element) {
 
 	function mouseMoveHandlerRegular(e) {
 		e.preventDefault();
-		position = {
-			x: e.pageX - xOffset,
-			y: e.pageY - yOffset
-		};
-		mouseMoveSignal.dispatch(position);
+		mouseMoveSignal.dispatch(self.x = e.pageX - xOffset, self.y = e.pageY - yOffset);
 	}
 
 	function mouseMoveHandlerIPad(e) {
 		e.preventDefault();
-		position = {
-			x: e.originalEvent.targetTouches[0].pageX - xOffset,
-			y: e.originalEvent.targetTouches[0].pageY - yOffset
-		};
-		mouseMoveSignal.dispatch(position);
+		mouseMoveSignal.dispatch(
+			self.x = e.originalEvent.targetTouches[0].pageX - xOffset,
+			self.y = e.originalEvent.targetTouches[0].pageY - yOffset);
 	}
 
 	function bind(val, ctx, evts, handler) {

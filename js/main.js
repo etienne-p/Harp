@@ -1,4 +1,4 @@
-var testKarplusStrong = function() {
+function testKarplusStrong() {
 
 	function initKS() {
 		rv = new KarplusStrong(),
@@ -64,19 +64,69 @@ var testKarplusStrong = function() {
 	toggleAudio();
 }
 
-function testString(){
-
+function testString() {
 
 	// create canvas
+	var canvas = document.getElementById('mycanvas'),
+		requestUpdate = new lib.Signal(),
+		str = new OSCString(requestUpdate);
 
+	function render(particles) {
+		var ctx = canvas.getContext('2d'),
+			pi2 = 2 * Math.PI,
+			p = null,
+			i = 0,
+			len = particles.length,
+			w = canvas.width = window.innerWidth,
+			h = canvas.height = window.innerHeight;
 
-	// create string
+		ctx.clearRect(0, 0, w, h);
+		ctx.fillStyle = '#ff0000';
+		ctx.strokeStyle = '#ff0000';
+
+		p = particles[0];
+		ctx.moveTo(p.x * w, p.y * h);
+
+		for (i = 1; i < len; ++i) {
+			p = particles[i];
+			ctx.lineTo(p.x * w, p.y * h);
+		}
+
+		ctx.stroke();
+	}
+
+	requestUpdate.add(function(who, what) {
+		console.log('str: [' + who + '] needs update: [' + what + ']');
+	});
+
+	str.init(0.5, 0.1, 0.5, 0.9, 24);
+
+	var fps = new lib.FPS(),
+		mouse = new lib.Mouse(false, document);
 
 	// update and render on canvas
+	fps.tick.add(function() {
+		render(str.update());
+	});
+
+	mouse.click.add(function(x, y) {
+		var len = str.particles.length;
+		var index = Math.floor(len * y / window.innerHeight);
+		index = Math.min(len - 2, Math.max(1, index));
+		str.particles[index].vx += 0.2 * (0.5 - Math.random());
+	});
 
 	// interact with mouse
 
-	// add sleep?
+	// add gui
+	var gui = new dat.GUI();
+	gui.add(str, 'acceleration', 0, 1);
+	gui.add(str, 'originAcceleration', 0, 1);
+	gui.add(str, 'friction', 0, 1);
+
+	// start
+	mouse.enabled(true);
+	fps.enabled(true);
 }
 
-window.onload = testStrings;
+window.onload = testString;
