@@ -34,16 +34,48 @@ lib.GeomUtil = {
 		}
 	},
 
-	getSymmetric: function(ofPt, centerPt){
+	getSymmetric: function(ofPt, centerPt) {
 		return {
-			x : - ofPt.x + 2 * centerPt.x,
-			y : - ofPt.y + 2 * centerPt.y
+			x: -ofPt.x + 2 * centerPt.x,
+			y: -ofPt.y + 2 * centerPt.y
 		}
 	},
 
 	// segment
-	distanceToSegment: function(segStartX, segStartY, segEndX, segEndY, pointX, pointY){
+	distanceToSegment: function(segStartX, segStartY, segEndX, segEndY, pointX, pointY) {
 
+	},
+
+	findIntersection: function(p0, p1, p2, p3) {
+
+		var s10_x = p1.x - p0.x,
+			s10_y = p1.y - p0.y,
+			s32_x = p3.x - p2.x,
+			s32_y = p3.y - p2.y,
+			denom = s10_x * s32_y - s32_x * s10_y;
+
+		if (denom == 0) return null;
+
+		var denom_is_positive = denom > 0
+
+		var s02_x = p0.x - p2.x,
+			s02_y = p0.y - p2.y,
+			s_numer = s10_x * s02_y - s10_y * s02_x;
+
+		if ((s_numer < 0) == denom_is_positive) return null;
+
+		var t_numer = s32_x * s02_y - s32_y * s02_x;
+
+		if ((t_numer < 0) == denom_is_positive) return null;
+
+		if (((s_numer > denom) == denom_is_positive) || ((t_numer > denom) == denom_is_positive)) return null;
+
+		var t = t_numer / denom;
+
+		return {
+			x: p0.x + (t * s10_x),
+			y: p0.y + (t * s10_y)
+		}
 	},
 
 	// port from insomnia

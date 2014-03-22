@@ -109,12 +109,37 @@ function testString() {
 		render(str.update());
 	});
 
-	mouse.click.add(function(x, y) {
+	/*mouse.click.add(function(x, y) {
 		var len = str.particles.length;
 		var index = Math.floor(len * y / window.innerHeight);
 		index = Math.min(len - 2, Math.max(1, index));
 		str.particles[index].vx += 0.2 * (0.5 - Math.random());
-	});
+	});*/
+
+	var findIntersection = lib.GeomUtil.findIntersection,
+		prevMousePos = {
+			x: -1,
+			y: -1
+		};
+
+	function checkPluck(x, y) {
+
+		// check segment intersect
+		var intersect = findIntersection(
+			str.particles[0],
+			str.particles[str.particles.length - 1],
+			prevMousePos, {
+				x: x / window.innerWidth,
+				y: y / window.innerHeight
+			}); // TODO: build an object to fit function expectation?
+
+		if (intersect) console.log('Intersect: [' + intersect + ']');
+
+		prevMousePos.x = x / window.innerWidth;
+		prevMousePos.y = y / window.innerHeight;
+	}
+
+	mouse.position.add(checkPluck);
 
 	// interact with mouse
 
