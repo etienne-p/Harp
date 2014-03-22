@@ -92,7 +92,7 @@ function testString() {
 		mousePos = {
 			x: -1,
 			y: -1
-		};
+		}, audioControl = new AudioControl();
 
 	function pluck(particles, at, dx, dy) {
 		var i = 0,
@@ -119,6 +119,8 @@ function testString() {
 
 		if (intersect) {
 			str.active = true;
+			audioControl.playSynth(str.id);
+			// TODO: volume depends on pluck strength
 			pluck(str.particles,
 				intersect,
 				mousePos.x - prevMousePos.x,
@@ -139,11 +141,12 @@ function testString() {
 		str.init(fromX, fromY, toX, toY, 24);
 		str.active = true;
 		renderer.addLine(str.id, 24);
+		audioControl.addSynth(str.id);
 		strings.push(str);
 	}
 
 	// add random lines
-	var j = 60;
+	var j = 20;
 	while (j--) addString(Math.random(), Math.random(), Math.random(), Math.random());
 
 	// interact with mouse
@@ -182,6 +185,7 @@ function testString() {
 	// start
 	mouse.enabled(true);
 	fps.enabled(true);
+	audioControl.resume();
 }
 
 window.onload = testString;

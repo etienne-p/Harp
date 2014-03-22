@@ -26,8 +26,10 @@ KSMixin = (function() {
 		return rv;
 	}
 
-	function mix(a, b, mulA, mulB){
-		var i = 0, len = Math.min(a.length, b.length), rv = [];
+	function mix(a, b, mulA, mulB) {
+		var i = 0,
+			len = Math.min(a.length, b.length),
+			rv = [];
 		for (; i < len; ++i) rv[i] = a[i] * mulA + b[i] * mulB;
 		return rv;
 	}
@@ -54,6 +56,7 @@ var KarplusStrong = function() {
 	this.burstNoiseMul = 0.5;
 	this.burstNoiseAlpha = 0.5;
 
+	this.level = 0;
 	this.active = false;
 }
 
@@ -79,15 +82,17 @@ KarplusStrong.prototype = {
 			dry = this._feedback * this._dry,
 			lp = this._feedback * (1 - this._dry),
 			index = 0,
+			acc = 0,
 			val = 0; // wave sample index
 
 		for (; i < bufLen; ++i) {
 			index = (prevIndex + 1) % waveLen;
 			val = wave[index] = dry * wave[index] + lp * (a * wave[index] + (1 - a) * wave[prevIndex]);
-			buffer[i] = mul * val;
+			buffer[i] += mul * val;
+			acc += Math.abs(val);
 			prevIndex = index;
 		}
-
+		this.level = mul * acc / bufLen;
 		this._index = index;
 		return buffer;
 	}
