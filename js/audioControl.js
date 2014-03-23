@@ -1,13 +1,15 @@
 // responsible for managing a pool of synthesizers
 var AudioControl = function() {
 	this._audioContext = lib.AudioUtil.getContext();
-	this._maxPoolSize = 4;
-	this._bufferLength = 1024,
+	this._maxPoolSize = 4; // 4 voices
+	this._bufferLength = 512,
 	this._scriptProcessor = this._audioContext.createScriptProcessor(this._bufferLength, 0, 1),
 	window.xxx = this._scriptProcessor; // prevent buggy garbage collection
 	this._synths = []; // so we can quickly iterate
-	this._synthIndex = {}; // and find by id
 	this._scriptProcessor.onaudioprocess = this._processAudio.bind(this);
+
+	var i = this._maxPoolSize;
+	while (i--) this._addSynth().active = false;
 }
 
 AudioControl.prototype = {
@@ -22,15 +24,30 @@ AudioControl.prototype = {
 		this._scriptProcessor.connect(this._audioContext.destination);
 	},
 
-	playSynth: function(id) {
-		var synth = this._synths[this._synthIndex[id]];
+	note: function(pitch, velocity) {
+		var synth = this._getLowestLevelSynth();
 		synth.active = true;
+		synth.delay = 1024 / pitch;
+		synth.mul = velocity;
 		synth.pluck();
 	},
 
-	addSynth: function(id, pitch) {
+	_getLowestLevelSynth: function() {
+		var rv = null,
+			level = Number.MAX_VALUE,
+			i = 0,
+			synth = null,
+			len = this._synths.length;
+		for (; i < len; ++i) {
+			synth = this._synths[i];
+			if (synth.level < level) {
+				level = (rv = synth).level;
+			}
+		}
+		return rv;
+	},
 
-		if (this._synthIndex.hasOwnProperty(id)) throw 'Synth id: [' + id + '] already exists'
+	_addSynth: function() {
 
 		// TODO: handle pitch
 		var rv = new KarplusStrong();
@@ -38,11 +55,11 @@ AudioControl.prototype = {
 		rv.burstLen = 1024;
 		rv.feedback = 0.99;
 		rv.dry = 0.5;
-		rv.mul = 0.1;
 		rv.alpha = 0.1;
+		rv.mul = 0;
 
-		this._synthIndex[id] = this._synths.length;
-		this._synths[this._synths.length] = rv;
+		this._synths.push(rv);
+		return rv;
 	},
 
 	_processAudio: function(e) {
@@ -50,8 +67,8 @@ AudioControl.prototype = {
 		var outputBuf = e.outputBuffer.getChannelData(0),
 			i = 0,
 			synth = null;
-			len = this._synths.length;
-		for(; i < len; ++i){
+		len = this._synths.length;
+		for (; i < len; ++i) {
 			synth = this._synths[i];
 			if (synth.active) {
 				synth.processAudio(outputBuf);
@@ -60,3 +77,25 @@ AudioControl.prototype = {
 		}
 	}
 }
+
+function addGroupAccessor(propName) {
+	Object.defineProperty(AudioControl.prototype, propName, {
+		get: function() {
+			return this._synths[0][propName];
+		},
+		set: function(value) {
+			var i = 0,
+				len = this._synths.length;
+			for (; i < len; ++i) this._synths[i][propName] = value;
+		}
+	});
+}
+
+addGroupAccessor('burstLen');
+addGroupAccessor('feedback');
+addGroupAccessor('dry');
+addGroupAccessor('alpha');
+addGroupAccessor('burstSawMul');
+addGroupAccessor('burstSawAlpha');
+addGroupAccessor('burstNoiseMul');
+addGroupAccessor('burstNoiseAlpha');

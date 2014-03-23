@@ -108,6 +108,13 @@ function testString() {
 			p.vx += dx * mul;
 			p.vy += dy * mul;
 		}
+
+		//audioControl.note(pitch, velocity);
+		var vel = Math.sqrt(dx * dx + dy * dy);
+		if (vel < 0.01) return;
+		audioControl.note(1 / strLen, Math.min(1, vel));
+		// TODO: volume depends on pluck strength
+		// TODO: pitch depends on string length
 	}
 
 	function checkPluck(str) {
@@ -119,8 +126,6 @@ function testString() {
 
 		if (intersect) {
 			str.active = true;
-			audioControl.playSynth(str.id);
-			// TODO: volume depends on pluck strength
 			pluck(str.particles,
 				intersect,
 				mousePos.x - prevMousePos.x,
@@ -141,7 +146,6 @@ function testString() {
 		str.init(fromX, fromY, toX, toY, 24);
 		str.active = true;
 		renderer.addLine(str.id, 24);
-		audioControl.addSynth(str.id);
 		strings.push(str);
 	}
 
@@ -168,10 +172,47 @@ function testString() {
 	});
 
 	// add gui
-	/*var gui = new dat.GUI();
-	gui.add(str, 'acceleration', 0, 1);
-	gui.add(str, 'originAcceleration', 0, 1);
-	gui.add(str, 'friction', 0, 1);*/
+	var gui = new dat.GUI();
+
+	(function addAudioParams() {
+		var f = gui.addFolder('Audio');
+		f.add(audioControl, 'burstLen', 0, 1024);
+		f.add(audioControl, 'feedback', 0, 0.99);
+		f.add(audioControl, 'dry', 0, 1);
+		f.add(audioControl, 'alpha', 0, 1);
+
+		var burstProps = ['burstSawMul', 'burstSawAlpha', 'burstNoiseMul', 'burstNoiseAlpha'];
+
+		function updateBurst() {
+			audioControl.burstLen = audioControl.burstLen;
+		}
+		for (var i = 0; i < burstProps.length; ++i) {
+			f.add(audioControl, burstProps[i], 0, 1).onChange(updateBurst);
+		}
+	})();
+
+	(function addStringsParams() {
+		var f = gui.addFolder('UI');
+		var mock = {
+			acceleration: 0,
+			originAcceleration: 0,
+			friction: 0
+		}
+
+		function syncStringProp(propName, newValue){
+			var i = 0, len = strings.length;
+			for (; i < len; ++i) strings[i][propName] = newValue;
+		}
+
+		function addProp(propName){
+			mock[propName] = strings[0][propName];
+			f.add(mock, propName, 0, 1).onChange(syncStringProp.bind(undefined, propName));
+		}
+
+		for (var prop in mock){
+			if (mock.hasOwnProperty(prop)) addProp(prop);
+		}
+	})();
 
 	// resize
 	window.addEventListener('resize', function() {
@@ -185,7 +226,7 @@ function testString() {
 	// start
 	mouse.enabled(true);
 	fps.enabled(true);
-	audioControl.resume();
+	//audioControl.resume();
 }
 
 window.onload = testString;

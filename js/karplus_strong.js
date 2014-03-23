@@ -49,12 +49,14 @@ var KarplusStrong = function() {
 	this._feedback = 0;
 	this._dry = 0.5;
 	this._index = -1; // sample index, init in updateWavetable
-
+	this._delay = -1;
 	//...
 	this.burstSawMul = 0.5;
 	this.burstSawAlpha = 0.5;
 	this.burstNoiseMul = 0.5;
 	this.burstNoiseAlpha = 0.5;
+
+	this._wavetable = this.zero(2048); // 2048: max delay
 
 	this.level = 0;
 	this.active = false;
@@ -67,7 +69,7 @@ KarplusStrong.prototype = {
 	pluck: function() {
 		// add burst in wavetable
 		var i = 0,
-			len = Math.min(this._burst.length, this._wavetable.length);
+			len = Math.min(this._burst.length, this._delay);
 		for (; i < len; ++i) this._wavetable[i] += this._burst[i];
 	},
 
@@ -75,7 +77,7 @@ KarplusStrong.prototype = {
 		var i = 0,
 			bufLen = buffer.length,
 			wave = this._wavetable,
-			waveLen = this._wavetable.length,
+			waveLen = this._delay,
 			prevIndex = this._index,
 			a = this.alpha,
 			mul = this.mul,
@@ -104,10 +106,10 @@ KSMixin.call(KarplusStrong.prototype);
 
 Object.defineProperty(KarplusStrong.prototype, 'delay', {
 	get: function() {
-		return this._wavetable.length;
+		return this._delay;
 	},
 	set: function(len) {
-		this._wavetable = this.zero(len);
+		this._delay = Math.floor(len);
 		this._index = 0;
 	}
 });

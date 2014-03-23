@@ -19,7 +19,10 @@ GLRenderer.prototype = {
 			color: '#2FA1D6'
 		})
 
-		this.renderer = new THREE.WebGLRenderer({ antialias: true });
+		this.renderer = new THREE.WebGLRenderer({
+			antialias: true
+		});
+		
 		this.camera = new THREE.OrthographicCamera(
 			this.width / -2,
 			this.width / 2,
