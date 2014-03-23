@@ -4,21 +4,24 @@ lib.FPS = function() {
 	this.tick = new lib.Signal();
 	this.paused = new lib.Signal();
 	this.resumed = new lib.Signal();
+
+	this._loop = this._loop.bind(this);
 }
 
 lib.FPS.prototype = {
 
 	constructor: lib.FPS,
 
-	_loop: function(){
+	_loop: function() {
 		if (this._pausedFlag) return;
 		var now = Date.now();
 		this.tick.dispatch(now - this._time);
 		this._time = now;
-		requestAnimationFrame(this._loop.bind(this));
+		requestAnimationFrame(this._loop);
 	},
 
-	enabled: function(val){
+	enabled: function(val) {
+
 		val = val ? true : false;
 		if (this._pausedFlag == !val) return;
 		if (val) {

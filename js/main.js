@@ -92,7 +92,7 @@ function testString() {
 		mousePos = {
 			x: -1,
 			y: -1
-		}, audioControl = new AudioControl();
+		};// audioControl = new AudioControl();
 
 	function pluck(particles, at, dx, dy) {
 		var i = 0,
@@ -112,7 +112,7 @@ function testString() {
 		//audioControl.note(pitch, velocity);
 		var vel = Math.sqrt(dx * dx + dy * dy);
 		if (vel < 0.01) return;
-		audioControl.note(1 / strLen, Math.min(1, vel));
+		//audioControl.note(1 / strLen, Math.min(1, vel));
 		// TODO: volume depends on pluck strength
 		// TODO: pitch depends on string length
 	}
@@ -150,14 +150,17 @@ function testString() {
 	}
 
 	// add random lines
-	var j = 20;
+	var j = 4;
 	while (j--) addString(Math.random(), Math.random(), Math.random(), Math.random());
 
 	// interact with mouse
 	mouse.position.add(storeMousePos);
 
+	var info = document.getElementById("info");
+
 	// update and render on canvas
-	fps.tick.add(function() {
+	fps.tick.add(function(dt) {
+		info.innerHTML = 'framerate: [' + Math.floor(1000/dt) + ']';
 		var i = 0,
 			len = strings.length;
 		if (mouseMoved) {
@@ -174,7 +177,8 @@ function testString() {
 	// add gui
 	var gui = new dat.GUI();
 
-	(function addAudioParams() {
+	// add Audio params
+	/*(function() {
 		var f = gui.addFolder('Audio');
 		f.add(audioControl, 'burstLen', 0, 1024);
 		f.add(audioControl, 'feedback', 0, 0.99);
@@ -189,27 +193,29 @@ function testString() {
 		for (var i = 0; i < burstProps.length; ++i) {
 			f.add(audioControl, burstProps[i], 0, 1).onChange(updateBurst);
 		}
-	})();
+	})();*/
 
-	(function addStringsParams() {
-		var f = gui.addFolder('UI');
-		var mock = {
-			acceleration: 0,
-			originAcceleration: 0,
-			friction: 0
-		}
+	// add UI params
+	(function() {
+		var f = gui.addFolder('UI'),
+			mock = {
+				acceleration: 0,
+				originAcceleration: 0,
+				friction: 0
+			};
 
-		function syncStringProp(propName, newValue){
-			var i = 0, len = strings.length;
+		function syncStringProp(propName, newValue) {
+			var i = 0,
+				len = strings.length;
 			for (; i < len; ++i) strings[i][propName] = newValue;
 		}
 
-		function addProp(propName){
+		function addProp(propName) {
 			mock[propName] = strings[0][propName];
 			f.add(mock, propName, 0, 1).onChange(syncStringProp.bind(undefined, propName));
 		}
 
-		for (var prop in mock){
+		for (var prop in mock) {
 			if (mock.hasOwnProperty(prop)) addProp(prop);
 		}
 	})();

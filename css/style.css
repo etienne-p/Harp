@@ -5,3 +5,9 @@ body {
 #container {
 	position: fixed;
 }
+
+#info {
+	color: white;
+	z-index: 2;
+	position: fixed;
+}

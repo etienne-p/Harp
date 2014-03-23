@@ -6,7 +6,7 @@ OSCStringUtil = (function() {
 			return {
 				x: x,
 				y: y,
-				ox: x, 
+				ox: x,
 				oy: y,
 				vx: 0,
 				vy: 0
@@ -33,11 +33,40 @@ OSCStringUtil = (function() {
 		node = particles[0];
 		nextNode = particles[1];
 
-		for (i = 1; i < len - 1; i++) {
+		for (i = 1; i < len - 1; ++i) {
 
 			prevNode = node;
 			node = nextNode;
 			nextNode = particles[i + 1];
+
+			// attracted by previous
+			node.vx += acceleration * (prevNode.x - node.x);
+			node.vy += acceleration * (prevNode.y - node.y);
+
+			// attracted by next
+			node.vx += acceleration * (nextNode.x - node.x);
+			node.vy += acceleration * (nextNode.y - node.y);
+
+			// attracted by origin
+			node.vx += originAcceleration * (node.ox - node.x);
+			node.vy += originAcceleration * (node.oy - node.y);
+
+			node.vx *= friction;
+			node.vy *= friction;
+			node.x += node.vx;
+			node.y += node.vy;
+
+			//sumVel += Math.abs(node.vx) + Math.abs(node.vy);
+		}
+
+		node = particles[len - 1]
+		prevNode = particles[len - 2]
+
+		for (i = len - 2; i > 0; --i) {
+
+			nextNode = node;
+			node = prevNode;
+			prevNode = particles[i - 1];
 
 			// attracted by previous
 			node.vx += acceleration * (prevNode.x - node.x);
@@ -72,8 +101,8 @@ OSCStringUtil = (function() {
 var OSCString = function(id) {
 	this.id = id;
 	this.acceleration = 0.99;
-	this.originAcceleration = 0.8;
-	this.friction = 0.45;
+	this.originAcceleration = 0.1;
+	this.friction = 0.48;
 	this.active = true;
 }
 
@@ -81,17 +110,17 @@ OSCString.prototype = {
 
 	constructor: OSCString,
 
-	init: function(fromX, fromY, toX, toY, numPts){
+	init: function(fromX, fromY, toX, toY, numPts) {
 		this.particles = this.initPoints(fromX, fromY, toX, toY, numPts)
 	},
 
-	update: function(){
+	update: function() {
 		var sumVel = this.updateParticles(this.particles, this.acceleration, this.originAcceleration, this.friction);
 		this.active = (sumVel > 0.001);
 		return this.particles;
 	},
 
-	pluck: function(){
+	pluck: function() {
 		this.requestUpdate(this, true)
 	}
 }
