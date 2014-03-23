@@ -6,8 +6,13 @@ body {
 	position: fixed;
 }
 
+#front {
+	z-index: 2;
+	position: fixed;
+}
+
 #info {
 	color: white;
-	z-index: 2;
+	z-index: 3;
 	position: fixed;
 }

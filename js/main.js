@@ -1,70 +1,4 @@
-function testKarplusStrong() {
-
-	function initKS() {
-		rv = new KarplusStrong(),
-		rv.delay = 1024;
-		rv.burstLen = 1024;
-		rv.feedback = 0.99;
-		rv.dry = 0.5;
-		rv.mul = 0.5;
-		rv.alpha = 0.1;
-		return rv;
-	}
-
-	var audioContext = lib.AudioUtil.getContext(),
-		bufferLength = 1024,
-		scriptProcessor = audioContext.createScriptProcessor(bufferLength, 0, 1),
-		ks = initKS(),
-		playing = false;
-
-	window.xxx = scriptProcessor; // prevent buggy garbage collection
-
-	scriptProcessor.onaudioprocess = function processAudio(e) {
-		ks.processAudio(
-			e.outputBuffer.getChannelData(0));
-	};
-
-	var gui = new dat.GUI();
-	gui.add(ks, 'burstLen', 1, 3000);
-	gui.add(ks, 'delay', 1, 3000);
-	gui.add(ks, 'feedback', 0.95, 1);
-	gui.add(ks, 'dry', 0, 1);
-	gui.add(ks, 'mul', 0, 1);
-	gui.add(ks, 'alpha', 0, 1);
-
-	function updateBurst() {
-		ks.burstLen = ks.burstLen;
-	}
-
-	// fine tuning the burst
-	var burstProps = ['burstSawMul', 'burstSawAlpha', 'burstNoiseMul', 'burstNoiseAlpha'],
-		i = 0;
-	for (i; i < burstProps.length; ++i) {
-		gui.add(ks, burstProps[i], 0, 1).onChange(updateBurst);
-	}
-
-	function audioPlaying(val) {
-		if (val) scriptProcessor.connect(audioContext.destination);
-		else scriptProcessor.disconnect(audioContext.destination);
-		console.log(val ? 'resume' : 'pause');
-	}
-
-	function toggleAudio() {
-		audioPlaying(playing = !playing);
-	}
-
-	window.addEventListener('click', function() {
-		ks.pluck();
-	});
-
-	window.addEventListener('keydown', function() {
-		toggleAudio();
-	});
-
-	toggleAudio();
-}
-
-function testString() {
+function main() {
 
 	var uid = (function() {
 		var index = -1;
@@ -74,27 +8,29 @@ function testString() {
 	})();
 
 	// create canvas
-	var w = window.innerWidth,
-		h = window.innerHeight,
-		strings = [],
-		renderer = new GLRenderer().init(),
-		//...
-		fps = new lib.FPS(),
-		mouse = new lib.Mouse(false, document),
-		//...
-		findIntersection = lib.GeomUtil.findIntersection,
-		distance = lib.GeomUtil.distance,
-		mouseMoved = false,
-		prevMousePos = {
-			x: -1,
-			y: -1
-		},
-		mousePos = {
-			x: -1,
-			y: -1
-		}, audioControl = new AudioControl(),
-		physicsUpdateRate = 8,
-		lenToFreq = 80;
+	var w = -1,
+		h = -1,
+		frontCanvas = document.getElementById('front');
+	strings = [],
+	renderer = new GLRenderer().init(),
+	fps = new lib.FPS(),
+	mouse = new lib.Mouse(false, document),
+	findIntersection = lib.GeomUtil.findIntersection,
+	distance = lib.GeomUtil.distance,
+	audioControl = new AudioControl(),
+	physicsUpdateRate = 8,
+	lenToFreq = 80,
+	mouseMoved = false,
+	prevMousePos = {
+		x: -1,
+		y: -1
+	},
+	mousePos = {
+		x: -1,
+		y: -1
+	}, startAt = null,
+	endAt = null,
+	gui = null;
 
 	function pluck(particles, at, dx, dy) {
 		var i = 0,
@@ -110,8 +46,6 @@ function testString() {
 			p.vx += dx * mul;
 			p.vy += dy * mul;
 		}
-
-
 		audioControl.note(lenToFreq / strLen);
 	}
 
@@ -131,14 +65,6 @@ function testString() {
 		}
 	}
 
-	function storeMousePos(x, y) {
-		mouseMoved = true;
-		mousePos = {
-			x: x / w,
-			y: y / h
-		};
-	}
-
 	function addString(fromX, fromY, toX, toY) {
 		var str = new OSCString(uid());
 		str.init(fromX, fromY, toX, toY, 24);
@@ -147,12 +73,126 @@ function testString() {
 		strings.push(str);
 	}
 
-	// add random lines
-	var j = 40;
-	while (j--) addString(Math.random(), Math.random(), Math.random(), Math.random());
+	// add Audio params
+	function addGui() {
+
+		var rv = new dat.GUI();
+
+		var audioFolder = rv.addFolder('Audio');
+		audioFolder.add(audioControl, 'burstLen', 12, 1024);
+		audioFolder.add(audioControl, 'feedback', 0.8, 0.99);
+		audioFolder.add(audioControl, 'dry', 0, 1);
+		audioFolder.add(audioControl, 'alpha', 0, 1);
+		audioFolder.add(audioControl, 'mul', 0, 0.2);
+
+		var burstProps = ['burstSawMul', 'burstSawAlpha', 'burstNoiseMul', 'burstNoiseAlpha'];
+
+		function updateBurst() {
+			audioControl.burstLen = audioControl.burstLen;
+		}
+		for (var i = 0; i < burstProps.length; ++i) {
+			audioFolder.add(audioControl, burstProps[i], 0, 1).onChange(updateBurst);
+		}
+
+
+		var UIFolder = rv.addFolder('UI'),
+			mock = {
+				acceleration: 0,
+				friction: 0,
+				physicsUpdateRate: physicsUpdateRate,
+				lenToFreq: lenToFreq
+			};
+
+		function syncStringProp(propName, newValue) {
+			var i = 0,
+				len = strings.length;
+			for (; i < len; ++i) strings[i][propName] = newValue;
+		}
+
+		function addProp(propName) {
+			mock[propName] = strings[0][propName];
+			UIFolder.add(mock, propName, 0, 1).onChange(syncStringProp.bind(undefined, propName));
+		}
+
+		addProp('acceleration');
+		addProp('friction');
+		UIFolder.add(mock, 'physicsUpdateRate', 1, 20).onChange(function(newValue) {
+			physicsUpdateRate = Math.floor(newValue);
+		});
+		UIFolder.add(mock, 'lenToFreq', 20, 160).onChange(function(newValue) {
+			lenToFreq = newValue;
+		});
+
+		// disable mouse over gui
+		rv.domElement.addEventListener('mouseover', function(){
+			console.log('mouseover');
+			mouse.enabled(false);
+		});
+		rv.domElement.addEventListener('mouseout', function(){
+			console.log('mouseout');
+			mouse.enabled(true);
+		});
+
+		return rv;
+	}
+
+	function updateFrontCanvas() {
+		var ctx = frontCanvas.getContext('2d');
+		ctx.clearRect(0, 0, w, h);
+		ctx.fillStyle = '#2FA1D6';
+		ctx.strokeStyle = '#2FA1D6';
+
+		ctx.beginPath();
+		ctx.arc(startAt.x * w, startAt.y * h, 4, 0, 2 * Math.PI);
+		ctx.fill();
+
+		ctx.beginPath();
+		ctx.arc(mouse.x, mouse.y, 4, 0, 2 * Math.PI);
+		ctx.fill();
+
+		ctx.moveTo(startAt.x * w, startAt.y * h);
+		ctx.lineTo(mouse.x, mouse.y);
+		ctx.stroke();
+	}
 
 	// interact with mouse
+	function storeMousePos(x, y) {
+		mouseMoved = true;
+		mousePos = {
+			x: x / w,
+			y: y / h
+		};
+	}
+
 	mouse.position.add(storeMousePos);
+
+	function mouseUpHandler() {
+		fps.tick.remove(updateFrontCanvas);
+		mouse.up.remove(mouseUpHandler);
+		frontCanvas.getContext('2d').clearRect(0, 0, w, h);
+		endAt = {
+			x: mouse.x / w,
+			y: mouse.y / h
+		};
+		if (distance(startAt.x, startAt.y, endAt.x, endAt.y) > 0.1) {
+			addString(startAt.x, startAt.y, endAt.x, endAt.y);
+			renderer.resize(w, h);
+			if (!gui) gui = addGui();
+		}
+		mouse.down.add(mouseDownHandler);
+	}
+
+	function mouseDownHandler() {
+		mouse.down.remove(mouseDownHandler);
+		startAt = {
+			x: mouse.x / w,
+			y: mouse.y / h
+		};
+		mouse.up.add(mouseUpHandler);
+		fps.tick.add(updateFrontCanvas);
+	}
+
+	mouse.down.add(mouseDownHandler);
 
 	var info = document.getElementById("info");
 
@@ -176,68 +216,14 @@ function testString() {
 		renderer.render(strings);
 	});
 
-	// add gui
-	var gui = new dat.GUI();
-
-	// add Audio params
-	(function() {
-		var f = gui.addFolder('Audio');
-		f.add(audioControl, 'burstLen', 12, 1024);
-		f.add(audioControl, 'feedback', 0.8, 0.99);
-		f.add(audioControl, 'dry', 0, 1);
-		f.add(audioControl, 'alpha', 0, 1);
-		f.add(audioControl, 'mul', 0, 0.2);
-
-		var burstProps = ['burstSawMul', 'burstSawAlpha', 'burstNoiseMul', 'burstNoiseAlpha'];
-
-		function updateBurst() {
-			audioControl.burstLen = audioControl.burstLen;
-		}
-		for (var i = 0; i < burstProps.length; ++i) {
-			f.add(audioControl, burstProps[i], 0, 1).onChange(updateBurst);
-		}
-
-	})();
-
-	// add UI params
-	(function() {
-		var f = gui.addFolder('UI'),
-			mock = {
-				acceleration: 0,
-				friction: 0,
-				physicsUpdateRate: physicsUpdateRate,
-				lenToFreq: lenToFreq
-			};
-
-		function syncStringProp(propName, newValue) {
-			var i = 0,
-				len = strings.length;
-			for (; i < len; ++i) strings[i][propName] = newValue;
-		}
-
-		function addProp(propName) {
-			mock[propName] = strings[0][propName];
-			f.add(mock, propName, 0, 1).onChange(syncStringProp.bind(undefined, propName));
-		}
-
-		addProp('acceleration');
-		addProp('friction');
-		f.add(mock, 'physicsUpdateRate', 1, 20).onChange(function(newValue) {
-			physicsUpdateRate = Math.floor(newValue);
-		});
-		f.add(mock, 'lenToFreq', 20, 160).onChange(function(newValue) {
-			lenToFreq = newValue;
-		});
-	})();
-
 	// resize
-	window.addEventListener('resize', function() {
-		w = window.innerWidth,
-		h = window.innerHeight,
+	function resize() {
+		frontCanvas.width = w = window.innerWidth;
+		frontCanvas.height = h = window.innerHeight;
 		renderer.resize(w, h);
-	});
-
-	renderer.resize(w, h);
+	}
+	window.addEventListener('resize', resize);
+	resize();
 
 	// start
 	mouse.enabled(true);
@@ -245,4 +231,4 @@ function testString() {
 	audioControl.resume();
 }
 
-window.onload = testString;
+window.onload = main;

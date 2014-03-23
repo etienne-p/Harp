@@ -51,12 +51,12 @@ lib.Mouse = function(isMobile, element) {
 	//-- Event handlers
 
 	function mouseMoveHandlerRegular(e) {
-		e.preventDefault();
+		//e.preventDefault();
 		mouseMoveSignal.dispatch(self.x = e.pageX - xOffset, self.y = e.pageY - yOffset);
 	}
 
 	function mouseMoveHandlerIPad(e) {
-		e.preventDefault();
+		//e.preventDefault();
 		mouseMoveSignal.dispatch(
 			self.x = e.originalEvent.targetTouches[0].pageX - xOffset,
 			self.y = e.originalEvent.targetTouches[0].pageY - yOffset);
