@@ -29,10 +29,11 @@ AudioControl.prototype = {
 		synth.active = true;
 		synth.delay = 44100 / freq;
 		synth.pluck();
+		console.log('frreq: [' + freq + '], delay: [' + synth.delay + ']');
 	},
 
 	_getFreeSynth: function() {
-		var rv = = this._synths[0],
+		var rv = this._synths[0],
 			time = Number.MAX_VALUE,
 			i = 0,
 			len = this._synths.length;

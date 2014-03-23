@@ -38,13 +38,21 @@ function main() {
 			strLen = distance(particles[0].x, particles[0].y, particles[len - 1].x, particles[len - 1].y)
 			d = 0,
 			mul = 0,
-			p = null;
+			p = null,
+			stringVec = new Vector2D(
+				particles[len - 1].x - particles[0].x,
+				particles[len - 1].y - particles[0].y),
+			mouseVec = new Vector2D(dx, dy); //TODO: cache vectors, no need to instanciate new ones
+
+		stringVec.rotate(Math.PI * 0.5); // perpendicular to string
+		mouseVec.project(stringVec);// project mouse vector on perpendicular
+
 		for (; i < len; ++i) {
 			p = particles[i];
 			d = distance(at.x, at.y, p.x, p.y);
 			mul = Math.exp(-d * 100 / strLen)
-			p.vx += dx * mul;
-			p.vy += dy * mul;
+			p.vx += mouseVec.x * mul;
+			p.vy += mouseVec.y * mul;
 		}
 		audioControl.note(lenToFreq / strLen);
 	}
@@ -124,10 +132,10 @@ function main() {
 		});
 
 		// disable mouse over gui
-		rv.domElement.addEventListener('mouseover', function(){
+		rv.domElement.addEventListener('mouseover', function() {
 			mouse.enabled(false);
 		});
-		rv.domElement.addEventListener('mouseout', function(){
+		rv.domElement.addEventListener('mouseout', function() {
 			mouse.enabled(true);
 		});
 
