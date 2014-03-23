@@ -1,8 +1,8 @@
 // responsible for managing a pool of synthesizers
 var AudioControl = function() {
 	this._audioContext = lib.AudioUtil.getContext();
-	this._maxPoolSize = 4; // 4 voices
-	this._bufferLength = 512,
+	this._maxPoolSize = 12; // 4 voices
+	this._bufferLength = 256,
 	this._scriptProcessor = this._audioContext.createScriptProcessor(this._bufferLength, 0, 1),
 	window.xxx = this._scriptProcessor; // prevent buggy garbage collection
 	this._synths = []; // so we can quickly iterate

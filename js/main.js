@@ -92,7 +92,7 @@ function testString() {
 		mousePos = {
 			x: -1,
 			y: -1
-		};// audioControl = new AudioControl();
+		}, audioControl = new AudioControl();
 
 	function pluck(particles, at, dx, dy) {
 		var i = 0,
@@ -111,8 +111,7 @@ function testString() {
 
 		//audioControl.note(pitch, velocity);
 		var vel = Math.sqrt(dx * dx + dy * dy);
-		if (vel < 0.01) return;
-		//audioControl.note(1 / strLen, Math.min(1, vel));
+		audioControl.note(1 / strLen, Math.max(0.02, Math.min(1, vel)));
 		// TODO: volume depends on pluck strength
 		// TODO: pitch depends on string length
 	}
@@ -150,7 +149,7 @@ function testString() {
 	}
 
 	// add random lines
-	var j = 4;
+	var j = 40;
 	while (j--) addString(Math.random(), Math.random(), Math.random(), Math.random());
 
 	// interact with mouse
@@ -160,8 +159,9 @@ function testString() {
 
 	// update and render on canvas
 	fps.tick.add(function(dt) {
-		info.innerHTML = 'framerate: [' + Math.floor(1000/dt) + ']';
+		info.innerHTML = 'framerate: [' + Math.floor(1000 / dt) + ']';
 		var i = 0,
+			j = 0,
 			len = strings.length;
 		if (mouseMoved) {
 			for (i = 0; i < len; ++i) checkPluck(strings[i]);
@@ -169,7 +169,10 @@ function testString() {
 			mouseMoved = false;
 		}
 		for (i = 0; i < len; ++i) {
-			if (strings[i].active) strings[i].update();
+			if (strings[i].active) {
+				j = 10;
+				while (j--) strings[i].update();
+			}
 		}
 		renderer.render(strings);
 	});
@@ -178,7 +181,7 @@ function testString() {
 	var gui = new dat.GUI();
 
 	// add Audio params
-	/*(function() {
+	(function() {
 		var f = gui.addFolder('Audio');
 		f.add(audioControl, 'burstLen', 0, 1024);
 		f.add(audioControl, 'feedback', 0, 0.99);
@@ -193,14 +196,13 @@ function testString() {
 		for (var i = 0; i < burstProps.length; ++i) {
 			f.add(audioControl, burstProps[i], 0, 1).onChange(updateBurst);
 		}
-	})();*/
+	})();
 
 	// add UI params
 	(function() {
 		var f = gui.addFolder('UI'),
 			mock = {
 				acceleration: 0,
-				originAcceleration: 0,
 				friction: 0
 			};
 
@@ -232,7 +234,7 @@ function testString() {
 	// start
 	mouse.enabled(true);
 	fps.enabled(true);
-	//audioControl.resume();
+	audioControl.resume();
 }
 
 window.onload = testString;

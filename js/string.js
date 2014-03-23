@@ -47,10 +47,6 @@ OSCStringUtil = (function() {
 			node.vx += acceleration * (nextNode.x - node.x);
 			node.vy += acceleration * (nextNode.y - node.y);
 
-			// attracted by origin
-			node.vx += originAcceleration * (node.ox - node.x);
-			node.vy += originAcceleration * (node.oy - node.y);
-
 			node.vx *= friction;
 			node.vy *= friction;
 			node.x += node.vx;
@@ -76,10 +72,6 @@ OSCStringUtil = (function() {
 			node.vx += acceleration * (nextNode.x - node.x);
 			node.vy += acceleration * (nextNode.y - node.y);
 
-			// attracted by origin
-			node.vx += originAcceleration * (node.ox - node.x);
-			node.vy += originAcceleration * (node.oy - node.y);
-
 			node.vx *= friction;
 			node.vy *= friction;
 			node.x += node.vx;
@@ -100,9 +92,8 @@ OSCStringUtil = (function() {
 
 var OSCString = function(id) {
 	this.id = id;
-	this.acceleration = 0.99;
-	this.originAcceleration = 0.1;
-	this.friction = 0.48;
+	this.acceleration = 0.999;
+	this.friction = 0.499;
 	this.active = true;
 }
 
@@ -116,7 +107,7 @@ OSCString.prototype = {
 
 	update: function() {
 		var sumVel = this.updateParticles(this.particles, this.acceleration, this.originAcceleration, this.friction);
-		this.active = (sumVel > 0.001);
+		this.active = (sumVel > 0.0001);
 		return this.particles;
 	},
 
