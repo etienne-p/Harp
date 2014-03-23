@@ -83,7 +83,7 @@ function main() {
 		audioFolder.add(audioControl, 'feedback', 0.8, 0.99);
 		audioFolder.add(audioControl, 'dry', 0, 1);
 		audioFolder.add(audioControl, 'alpha', 0, 1);
-		audioFolder.add(audioControl, 'mul', 0, 0.2);
+		audioFolder.add(audioControl, 'mul', 0, 0.8);
 
 		var burstProps = ['burstSawMul', 'burstSawAlpha', 'burstNoiseMul', 'burstNoiseAlpha'];
 
@@ -125,11 +125,9 @@ function main() {
 
 		// disable mouse over gui
 		rv.domElement.addEventListener('mouseover', function(){
-			console.log('mouseover');
 			mouse.enabled(false);
 		});
 		rv.domElement.addEventListener('mouseout', function(){
-			console.log('mouseout');
 			mouse.enabled(true);
 		});
 
@@ -194,11 +192,8 @@ function main() {
 
 	mouse.down.add(mouseDownHandler);
 
-	var info = document.getElementById("info");
-
 	// update and render on canvas
 	fps.tick.add(function(dt) {
-		info.innerHTML = 'framerate: [' + Math.floor(1000 / dt) + ']';
 		var i = 0,
 			j = 0,
 			len = strings.length;

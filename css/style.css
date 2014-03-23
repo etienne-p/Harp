@@ -10,9 +10,3 @@ body {
 	z-index: 2;
 	position: fixed;
 }
-
-#info {
-	color: white;
-	z-index: 3;
-	position: fixed;
-}

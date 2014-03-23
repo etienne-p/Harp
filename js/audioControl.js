@@ -25,38 +25,34 @@ AudioControl.prototype = {
 	},
 
 	note: function(freq) {
-		var synth = this._getLowestLevelSynth();
+		var synth = this._getFreeSynth();
 		synth.active = true;
 		synth.delay = 44100 / freq;
 		synth.pluck();
 	},
 
-	_getLowestLevelSynth: function() {
-		var rv = null,
-			level = Number.MAX_VALUE,
+	_getFreeSynth: function() {
+		var rv = = this._synths[0],
+			time = Number.MAX_VALUE,
 			i = 0,
-			synth = null,
 			len = this._synths.length;
 		for (; i < len; ++i) {
 			synth = this._synths[i];
-			if (synth.level < level) {
-				level = (rv = synth).level;
+			if (synth.latestPluck < time) {
+				time = (rv = synth).latestPluck;
 			}
 		}
 		return rv;
 	},
 
 	_addSynth: function() {
-
-		// TODO: handle pitch
 		var rv = new KarplusStrong();
 		rv.delay = 1024;
 		rv.burstLen = 1024;
 		rv.feedback = 0.99;
 		rv.dry = 0.5;
 		rv.alpha = 0.1;
-		rv.mul = 0.05;
-
+		rv.mul = 0.2;
 		this._synths.push(rv);
 		return rv;
 	},

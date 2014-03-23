@@ -59,6 +59,7 @@ var KarplusStrong = function() {
 	this._wavetable = this.zero(2048); // 2048: max delay
 
 	this.level = 0;
+	this.latestPluck = 0;
 	this.active = false;
 }
 
@@ -68,6 +69,7 @@ KarplusStrong.prototype = {
 
 	pluck: function() {
 		// add burst in wavetable
+		this.latestPluck = Date.now();
 		var i = 0,
 			len = Math.min(this._burst.length, this._delay);
 		for (; i < len; ++i) this._wavetable[i] += this._burst[i];
