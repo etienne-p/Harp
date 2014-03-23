@@ -109,7 +109,7 @@ Object.defineProperty(KarplusStrong.prototype, 'delay', {
 		return this._delay;
 	},
 	set: function(len) {
-		this._delay = Math.floor(len);
+		this._delay = Math.min(Math.floor(len), this._wavetable.length);
 		this._index = 0;
 	}
 });

@@ -92,7 +92,9 @@ function testString() {
 		mousePos = {
 			x: -1,
 			y: -1
-		}, audioControl = new AudioControl();
+		}, audioControl = new AudioControl(),
+		physicsUpdateRate = 8,
+		lenToFreq = 80;
 
 	function pluck(particles, at, dx, dy) {
 		var i = 0,
@@ -109,11 +111,8 @@ function testString() {
 			p.vy += dy * mul;
 		}
 
-		//audioControl.note(pitch, velocity);
-		var vel = Math.sqrt(dx * dx + dy * dy);
-		audioControl.note(1 / strLen, Math.max(0.02, Math.min(1, vel)));
-		// TODO: volume depends on pluck strength
-		// TODO: pitch depends on string length
+
+		audioControl.note(lenToFreq / strLen);
 	}
 
 	function checkPluck(str) {
@@ -121,7 +120,7 @@ function testString() {
 		var intersect = findIntersection(
 			str.particles[0],
 			str.particles[str.particles.length - 1],
-			prevMousePos, mousePos); // TODO: build an object to fit function expectation?
+			prevMousePos, mousePos);
 
 		if (intersect) {
 			str.active = true;
@@ -170,7 +169,7 @@ function testString() {
 		}
 		for (i = 0; i < len; ++i) {
 			if (strings[i].active) {
-				j = 10;
+				j = physicsUpdateRate;
 				while (j--) strings[i].update();
 			}
 		}
@@ -183,10 +182,11 @@ function testString() {
 	// add Audio params
 	(function() {
 		var f = gui.addFolder('Audio');
-		f.add(audioControl, 'burstLen', 0, 1024);
-		f.add(audioControl, 'feedback', 0, 0.99);
+		f.add(audioControl, 'burstLen', 12, 1024);
+		f.add(audioControl, 'feedback', 0.8, 0.99);
 		f.add(audioControl, 'dry', 0, 1);
 		f.add(audioControl, 'alpha', 0, 1);
+		f.add(audioControl, 'mul', 0, 0.2);
 
 		var burstProps = ['burstSawMul', 'burstSawAlpha', 'burstNoiseMul', 'burstNoiseAlpha'];
 
@@ -196,6 +196,7 @@ function testString() {
 		for (var i = 0; i < burstProps.length; ++i) {
 			f.add(audioControl, burstProps[i], 0, 1).onChange(updateBurst);
 		}
+
 	})();
 
 	// add UI params
@@ -203,7 +204,9 @@ function testString() {
 		var f = gui.addFolder('UI'),
 			mock = {
 				acceleration: 0,
-				friction: 0
+				friction: 0,
+				physicsUpdateRate: physicsUpdateRate,
+				lenToFreq: lenToFreq
 			};
 
 		function syncStringProp(propName, newValue) {
@@ -217,9 +220,14 @@ function testString() {
 			f.add(mock, propName, 0, 1).onChange(syncStringProp.bind(undefined, propName));
 		}
 
-		for (var prop in mock) {
-			if (mock.hasOwnProperty(prop)) addProp(prop);
-		}
+		addProp('acceleration');
+		addProp('friction');
+		f.add(mock, 'physicsUpdateRate', 1, 20).onChange(function(newValue) {
+			physicsUpdateRate = Math.floor(newValue);
+		});
+		f.add(mock, 'lenToFreq', 20, 160).onChange(function(newValue) {
+			lenToFreq = newValue;
+		});
 	})();
 
 	// resize

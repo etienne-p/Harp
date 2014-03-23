@@ -2,7 +2,7 @@
 var AudioControl = function() {
 	this._audioContext = lib.AudioUtil.getContext();
 	this._maxPoolSize = 12; // 4 voices
-	this._bufferLength = 256,
+	this._bufferLength = 512,
 	this._scriptProcessor = this._audioContext.createScriptProcessor(this._bufferLength, 0, 1),
 	window.xxx = this._scriptProcessor; // prevent buggy garbage collection
 	this._synths = []; // so we can quickly iterate
@@ -24,11 +24,10 @@ AudioControl.prototype = {
 		this._scriptProcessor.connect(this._audioContext.destination);
 	},
 
-	note: function(pitch, velocity) {
+	note: function(freq) {
 		var synth = this._getLowestLevelSynth();
 		synth.active = true;
-		synth.delay = 1024 / pitch;
-		synth.mul = velocity;
+		synth.delay = 44100 / freq;
 		synth.pluck();
 	},
 
@@ -56,7 +55,7 @@ AudioControl.prototype = {
 		rv.feedback = 0.99;
 		rv.dry = 0.5;
 		rv.alpha = 0.1;
-		rv.mul = 0;
+		rv.mul = 0.05;
 
 		this._synths.push(rv);
 		return rv;
@@ -95,6 +94,7 @@ addGroupAccessor('burstLen');
 addGroupAccessor('feedback');
 addGroupAccessor('dry');
 addGroupAccessor('alpha');
+addGroupAccessor('mul');
 addGroupAccessor('burstSawMul');
 addGroupAccessor('burstSawAlpha');
 addGroupAccessor('burstNoiseMul');
