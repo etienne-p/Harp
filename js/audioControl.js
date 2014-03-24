@@ -62,9 +62,13 @@ AudioControl.prototype = {
 		// compute active processors
 		var outputBuf = e.outputBuffer.getChannelData(0),
 			i = 0,
-			synth = null;
-		len = this._synths.length;
-		for (; i < len; ++i) {
+			synth = null,
+			bufLen = outputBuf.length,
+			len = this._synths.length;
+
+		for (i = 0; i < bufLen; ++i) outputBuf[i] = 0;
+
+		for (i = 0; i < len; ++i) {
 			synth = this._synths[i];
 			if (synth.active) {
 				synth.processAudio(outputBuf);
