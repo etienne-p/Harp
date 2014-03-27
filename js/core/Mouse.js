@@ -18,7 +18,24 @@ lib.Mouse = function(isMobile, element) {
 		handlers = {},
 		mouseMoveSignal = new lib.Signal(),
 		xOffset = 0,
-		yOffset = 0;
+		yOffset = 0,
+		//-- choose event handler depending on the event
+		mouseMoveHandler = function(e) {
+			if (e.pageX) {
+				mouseMoveHandler = function(e) {
+					e.preventDefault();
+					mouseMoveSignal.dispatch(self.x = e.pageX - xOffset, self.y = e.pageY - yOffset);
+				}
+			} else if (e.originalEvent.targetTouches[0].pageX) {
+				mouseMoveHandler = function(e) {
+					e.preventDefault();
+					mouseMoveSignal.dispatch(
+						self.x = e.originalEvent.targetTouches[0].pageX - xOffset,
+						self.y = e.originalEvent.targetTouches[0].pageY - yOffset);
+				}
+			}
+			mouseMoveHandler(e);
+		};
 
 	//-- init signals value
 	self.x = -1;
@@ -48,20 +65,6 @@ lib.Mouse = function(isMobile, element) {
 		yOffset = rect.top;
 	}
 
-	//-- Event handlers
-
-	function mouseMoveHandlerRegular(e) {
-		//e.preventDefault();
-		mouseMoveSignal.dispatch(self.x = e.pageX - xOffset, self.y = e.pageY - yOffset);
-	}
-
-	function mouseMoveHandlerIPad(e) {
-		//e.preventDefault();
-		mouseMoveSignal.dispatch(
-			self.x = e.originalEvent.targetTouches[0].pageX - xOffset,
-			self.y = e.originalEvent.targetTouches[0].pageY - yOffset);
-	}
-
 	function bind(val, ctx, evts, handler) {
 		var method = val ? ctx.addEventListener : ctx.removeEventListener;
 		if (Object.prototype.toString.call(evts) == '[object Array]') {
@@ -71,8 +74,7 @@ lib.Mouse = function(isMobile, element) {
 	}
 
 	//-- Platform specific config
-	var mouseMoveHandler = isMobile ? mouseMoveHandlerMobile : mouseMoveHandlerRegular,
-		mouseMoveEvent = isMobile ? ['touchstart', 'touchmove', 'touchend'] : 'mousemove';
+	var mouseMoveEvent = isMobile ? ['touchstart', 'touchmove', 'touchend'] : 'mousemove';
 
 	//-- Exposed
 	self.enabled = function(val) {
