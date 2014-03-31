@@ -1,4 +1,0 @@
-// strings are responsible for subscribing to update
-// monitor it in realtime to make sure this architecture works
-
-// handle signal update
