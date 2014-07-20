@@ -232,6 +232,10 @@ function main() {
 	mouse.enabled(true);
 	fps.enabled(true);
 	audioControl.resume();
+
+	window.addEventListener('click', function()	{
+		audioControl.note(250);
+		})
 }
 
 window.onload = main;
